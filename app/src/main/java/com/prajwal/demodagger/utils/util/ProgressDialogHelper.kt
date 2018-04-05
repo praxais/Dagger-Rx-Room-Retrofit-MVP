@@ -1,9 +1,9 @@
-package com.prajwal.demodagger.utils
+package com.prajwal.demodagger.utils.util
 
 import android.app.ProgressDialog
 import android.content.Context
 
-/*
+/**
  * Created by prajwal on 4/5/18.
  */
 
