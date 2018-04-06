@@ -25,7 +25,7 @@ class MainActivity : BaseActivity<MainView, MainPresenter>(), MainView {
         setContentView(R.layout.activity_main)
 
         Log.d("ApiService", apiService.toString())
-        presenter.print()
+        presenter.getData()
     }
 
     override fun createPresenter() = mainPresenter

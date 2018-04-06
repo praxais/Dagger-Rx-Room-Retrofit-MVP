@@ -1,5 +1,6 @@
 package com.prajwal.demodagger.network
 
+import com.prajwal.demodagger.feature.shared.model.Demo
 import com.prajwal.demodagger.utils.constants.ApiConstants
 import io.reactivex.Single
 import retrofit2.Response
@@ -10,6 +11,6 @@ import retrofit2.http.GET
  */
 
 interface ApiService {
-//    @GET(ApiConstants.demoApi)
-//    fun getDemo(): Single<Response<Demo>>
+    @GET(ApiConstants.demoApi)
+    fun getDemo(): Single<Response<Demo>>
 }
