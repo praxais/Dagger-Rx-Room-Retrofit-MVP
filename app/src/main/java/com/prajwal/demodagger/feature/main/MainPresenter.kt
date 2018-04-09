@@ -1,7 +1,6 @@
 package com.prajwal.demodagger.feature.main
 
-import android.content.Context
-import android.widget.Toast
+import android.util.Log
 import com.prajwal.demodagger.feature.base.BasePresenter
 import javax.inject.Inject
 
@@ -10,17 +9,14 @@ import javax.inject.Inject
  */
 
 class MainPresenter @Inject constructor(private val mainInteractor: MainInteractor) : BasePresenter<MainView>() {
-    @Inject
-    lateinit var context: Context
-
     fun getData() {
         ifViewAttached { view ->
             view.showLoading()
-            mainInteractor.getDemoApiRepository().subscribe({ e ->
-                Toast.makeText(context, "Successful", Toast.LENGTH_SHORT).show()
+            mainInteractor.getDemoApiRepository().subscribe({ data ->
+                view.populateData(data)
                 view.hideLoading()
             }, { error ->
-                Toast.makeText(context, "Failure", Toast.LENGTH_SHORT).show()
+                Log.d("Xais", error.localizedMessage)
                 view.hideLoading()
             })
         }
