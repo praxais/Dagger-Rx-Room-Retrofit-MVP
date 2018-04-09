@@ -6,6 +6,7 @@ import com.prajwal.demodagger.feature.shared.model.Data
 import com.prajwal.demodagger.network.ApiService
 import com.prajwal.demodagger.room.AppDatabase
 import io.reactivex.Single
+import io.reactivex.SingleEmitter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
@@ -21,30 +22,8 @@ class DemoApiRepository @Inject constructor() {
     @Inject
     lateinit var context: Context
 
-    fun getData(): Single<List<Data>> =
-            Single.concat(getDataFromDb(), getDataFromApi()).first(ArrayList())
-
-    private fun getDataFromApi(): Single<List<Data>> =
-            Single.create({ e ->
-                apiService.getDemo()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe({ response ->
-                            if (response.isSuccessful) {
-                                insertToDatabase(response.body()!!.data)
-                                        .observeOn(AndroidSchedulers.mainThread())
-                                        .subscribeOn(Schedulers.newThread())
-                                        .subscribe({ _ ->
-                                            e.onSuccess(response.body()!!.data)
-                                        }, { error ->
-                                            e.onError(Throwable("Error API call"))
-                                        })
-                            } else
-                                e.onError(Throwable("Error API call"))
-                        }, { error ->
-                            e.onError(error)
-                        })
-            })
+    //get data from db, if db empty ... get data from Api
+    fun getData(): Single<List<Data>> = getDataFromDb()
 
     private fun getDataFromDb(): Single<List<Data>> =
             Single.create({ e ->
@@ -57,10 +36,10 @@ class DemoApiRepository @Inject constructor() {
                             if (dataList.isNotEmpty()) {
                                 e.onSuccess(dataList)
                             } else {
-                                e.onError(Throwable("sdf"))
+                                getDataFromApi(e)
                             }
-                        }, { error ->
-                            e.onError(Throwable("Error"))
+                        }, {
+                            getDataFromApi(e)
                         })
             })
 
@@ -73,7 +52,27 @@ class DemoApiRepository @Inject constructor() {
                     dataDao.insetDemo(dataList)
                     e.onSuccess("Successful")
                 } catch (exception: IllegalStateException) {
-                    e.onError(Throwable("Failure"))
+                    e.onError(exception)
                 }
             }
+
+    private fun getDataFromApi(emitter: SingleEmitter<List<Data>>) =
+            apiService.getDemo()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ response ->
+                        if (response.isSuccessful) {
+                            insertToDatabase(response.body()!!.data)
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribeOn(Schedulers.newThread())
+                                    .subscribe({
+                                        emitter.onSuccess(response.body()!!.data)
+                                    }, { error ->
+                                        emitter.onError(error)
+                                    })
+                        } else
+                            emitter.onError(Throwable("Error API call"))
+                    }, { error ->
+                        emitter.onError(error)
+                    })
 }
